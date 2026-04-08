@@ -11,6 +11,8 @@ interface SheetPayload {
   folderId?: string;
   fileName?: string;
   fileContent?: string;
+  sn?: string;
+  cellUpdates?: Array<{ column: number; value: any }>;
 }
 
 export interface SharingLogData {
@@ -52,6 +54,11 @@ export const submitToGoogleSheets = async (payload: SheetPayload) => {
       payload.data
     ) {
       params.append("rowData", JSON.stringify(payload.data));
+    }
+
+    if (payload.action === "updateCellsBySn" && payload.sn && payload.cellUpdates) {
+      params.append("sn", payload.sn);
+      params.append("cellUpdates", JSON.stringify(payload.cellUpdates));
     }
 
     if (payload.action === "updateColumns" && payload.data) {
@@ -224,6 +231,7 @@ export const fetchDocumentsFromGoogleSheets = async (): Promise<DocumentItem[]> 
           companyName: (r?.[5] || "").toString().trim(),
           needsRenewal: (r?.[6] || "").toString().toLowerCase() === "yes",
           renewalDate: renewalDateStr,
+          contactNumber: (r?.[13] || "").toString().trim(), // Column N is index 13
           file: fileUrl ? "View Document" : null,
           fileContent: fileUrl,
           date: dateStr,

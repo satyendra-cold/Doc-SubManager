@@ -494,6 +494,9 @@ const AllDocuments = () => {
                       Renewal Date
                     </th>
                     <th className="px-3 py-2 whitespace-nowrap bg-gray-50">
+                      Contact No
+                    </th>
+                    <th className="px-3 py-2 whitespace-nowrap bg-gray-50">
                       File
                     </th>
                   </tr>
@@ -626,6 +629,9 @@ const AllDocuments = () => {
                       </td>
                       <td className="px-3 py-2 text-gray-500 font-mono text-xs">
                         {formatDate(item.renewalDate)}
+                      </td>
+                      <td className="px-3 py-2 text-gray-700 text-xs font-medium">
+                        {item.contactNumber || '-'}
                       </td>
                       <td className="px-3 py-2">
                         {item.file ? (

@@ -10,6 +10,7 @@ export interface DocumentItem {
   documentName: string;
   needsRenewal: boolean;
   renewalDate?: string; // Optional renewal date
+  contactNumber?: string; // Column N from Google Sheet
   file: string | null; // File name
   fileContent?: string; // Base64 data for download
   date: string;
@@ -185,6 +186,7 @@ interface DataState {
   ) => void;
   updateLoan: (id: string, updatedItem: Partial<LoanItem>) => void;
   deleteDocument: (id: string) => void;
+  deleteSubscription: (id: string) => void;
   setSubscriptionRenewalHistory: (items: SubscriptionRenewalItem[]) => void;
 }
 
@@ -246,6 +248,10 @@ const useDataStore = create<DataState>()(
       deleteDocument: (id) =>
         set((state) => ({
           documents: state.documents.filter((doc) => doc.id !== id),
+        })),
+      deleteSubscription: (id) =>
+        set((state) => ({
+          subscriptions: state.subscriptions.filter((sub) => sub.id !== id),
         })),
     }),
     {

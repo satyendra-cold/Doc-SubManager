@@ -1,19 +1,25 @@
 import { useState, useEffect, useDeferredValue, useMemo } from 'react';
-import { Plus, Search, CreditCard, Loader, RefreshCw } from 'lucide-react';
+import { Plus, Search, CreditCard, Loader, RefreshCw, Edit, Trash2 } from 'lucide-react';
 import useHeaderStore from '../../store/headerStore';
 import AddSubscription from './AddSubscription';
+import EditSubscription from './EditSubscription';
 import useDataStore from '../../store/dataStore';
 import { syncSubscriptions } from '../../utils/subscriptionSync';
+import { submitToGoogleSheets } from '../../utils/googleSheetsService';
+import { toast } from 'react-hot-toast';
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
 const AllSubscriptions = () => {
   const { setTitle } = useHeaderStore();
-  const { subscriptions, setSubscriptions } = useDataStore();
+  const { subscriptions, setSubscriptions, deleteSubscription } = useDataStore();
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const deferredSearch = useDeferredValue(searchTerm);
   const [filterFrequency, setFilterFrequency] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editingSubId, setEditingSubId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const fetchSubscriptionsFromGoogleSheets = async () => {
     if (loading) return;
@@ -43,6 +49,90 @@ const AllSubscriptions = () => {
 
   const handleAddSuccess = () => {
     fetchSubscriptionsFromGoogleSheets();
+  };
+
+  const handleEdit = (id: string) => {
+    setEditingSubId(id);
+    // Open edit modal
+  };
+
+  const handleEditClose = () => {
+    setEditingSubId(null);
+    fetchSubscriptionsFromGoogleSheets();
+  };
+
+  const handleDelete = (id: string) => {
+    setDeleteId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    
+    const subToDelete = subscriptions.find((s) => s.id === deleteId);
+    
+    // Delete locally first for immediate feedback
+    deleteSubscription(deleteId);
+    setSubscriptions(subscriptions.filter((s) => s.id !== deleteId));
+    setDeleteId(null);
+    
+    // Delete from Google Sheets
+    if (subToDelete) {
+      try {
+        toast.loading("Deleting from cloud...", { id: "delete-sub-toast" });
+        
+        if (subToDelete.rowIndex) {
+          // Delete using rowIndex
+          await submitToGoogleSheets({
+            action: "delete",
+            sheetName: "Subscription",
+            rowIndex: subToDelete.rowIndex
+          });
+        } else if (subToDelete.sn) {
+          // Fallback: Find and delete by Serial Number
+          // First, we need to find the row index by SN
+          const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_URL || "";
+          const fetchRes = await fetch(`${GOOGLE_SCRIPT_URL}?sheet=Subscription&_t=${Date.now()}`);
+          const fetchJson = await fetchRes.json();
+          
+          if (fetchJson.success && fetchJson.data) {
+            // Find the row with matching SN
+            const rows = fetchJson.data.slice(1); // Skip header
+            let targetRowIndex = -1;
+            
+            for (let i = 0; i < rows.length; i++) {
+              const row = rows[i];
+              const rowSn = (row[1] || '').toString().trim();
+              if (rowSn === subToDelete.sn) {
+                // The row index is i + 2 (header is row 1, data starts at row 2)
+                // But we need to account for the originalRowIndex that was added
+                const lastElement = row[row.length - 1];
+                if (typeof lastElement === 'number' && lastElement > 1) {
+                  targetRowIndex = lastElement;
+                } else {
+                  targetRowIndex = i + 2;
+                }
+                break;
+              }
+            }
+            
+            if (targetRowIndex > 1) {
+              await submitToGoogleSheets({
+                action: "delete",
+                sheetName: "Subscription",
+                rowIndex: targetRowIndex
+              });
+            }
+          }
+        }
+        
+        toast.success("Subscription deleted from cloud", { id: "delete-sub-toast" });
+      } catch (error) {
+        console.error("Failed to delete from cloud", error);
+        toast.error("Deleted locally, but cloud update failed.", { id: "delete-sub-toast" });
+      }
+    } else {
+      toast.success("Subscription deleted locally");
+    }
   };
 
   const filteredData = useMemo(() => {
@@ -173,6 +263,7 @@ const AllSubscriptions = () => {
             <table className="w-full text-left border-collapse">
               <thead className="sticky top-0 z-10 bg-gray-50">
                 <tr className="border-b border-gray-100 text-xs uppercase text-gray-500 font-semibold tracking-wider whitespace-nowrap">
+                  <th className="px-3 py-2 text-center">Action</th>
                   <th className="px-3 py-2">Serial No</th>
                   <th className="px-3 py-2">Status</th>
                   <th className="px-3 py-2">Timestamp</th>
@@ -187,6 +278,22 @@ const AllSubscriptions = () => {
               <tbody className="text-sm divide-y divide-gray-50">
                 {filteredData.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50/80 transition-colors">
+                      <td className="px-3 py-2 flex justify-center items-center gap-2">
+                        <button
+                          onClick={() => handleEdit(item.id)}
+                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Edit"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
                     <td className="px-3 py-2 font-bold text-indigo-600 text-xs font-mono">{item.sn}</td>
                     <td className="px-3 py-2">
                       <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${item.status === 'Paid' ? 'bg-green-50 text-green-700 border-green-100' :
@@ -208,7 +315,7 @@ const AllSubscriptions = () => {
                       </span>
                     </td>
                     <td className="px-3 py-2 text-gray-500 max-w-xs truncate" title={item.purpose}>{item.purpose}</td>
-                  </tr>
+                    </tr>
                 ))}
               </tbody>
             </table>
@@ -250,6 +357,46 @@ const AllSubscriptions = () => {
           ))}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 animate-fade-in-up">
+            <div className="flex items-start gap-4">
+              <div className="h-12 w-12 flex items-center justify-center bg-red-50 text-red-600 rounded-full shrink-0">
+                <Trash2 size={24} />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Delete Subscription</h3>
+                <p className="text-sm text-gray-600 mb-6">
+                  Are you sure you want to delete this subscription? This action cannot be undone.
+                </p>
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={() => setDeleteId(null)}
+                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmDelete}
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <EditSubscription
+        isOpen={editingSubId !== null}
+        onClose={handleEditClose}
+        subscriptionId={editingSubId}
+      />
+
       <AddSubscription
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}

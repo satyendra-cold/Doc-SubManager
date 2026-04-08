@@ -169,6 +169,11 @@ export const syncSubscriptions = async (): Promise<SubscriptionItem[]> => {
 
             const rawDate = (row[0] || '').toString().trim();
 
+            // Extract rowIndex from the last element of the row (added by removeDuplicatesAndEmptyRows)
+            // The last element is the originalRowIndex
+            const lastElement = row[row.length - 1];
+            const rowIndex = (typeof lastElement === 'number' && lastElement > 1) ? lastElement : undefined;
+
             return {
                 id: `sub-${sn}-${index}`,
                 sn: sn,
@@ -194,7 +199,8 @@ export const syncSubscriptions = async (): Promise<SubscriptionItem[]> => {
                 planned1,
                 planned2,
                 actual1,
-                renewalCount
+                renewalCount,
+                rowIndex: rowIndex
             };
         })
         .filter((item: SubscriptionItem | null): item is SubscriptionItem => item !== null);

@@ -224,7 +224,12 @@ const EditDocument: React.FC<EditDocumentProps> = ({ isOpen, onClose, documentId
                 formData.companyName,                         // 5: Name
                 formData.needsRenewal ? "Yes" : "No",         // 6: Renewal
                 formData.renewalDate ? new Date(formData.renewalDate).toLocaleDateString("en-GB") : "", // 7: Renewal Date
-                fileUrl                                       // 8: Image URL
+                fileUrl,                                      // 8: Image URL
+                '',                                           // 9: Empty
+                '',                                           // 10: Empty
+                '',                                           // 11: Empty
+                '',                                           // 12: Empty
+                formData.contactNumber || '',                 // 13: Column N - Contact Number
             ];
 
             // Submit Update with rowIndex if available
@@ -323,8 +328,8 @@ const EditDocument: React.FC<EditDocumentProps> = ({ isOpen, onClose, documentId
                                     />
                                 </div>
 
-                                {/* 5. Needs Renewal & Date */}
-                                <div className="flex items-center gap-3 bg-gray-50/50 p-2 rounded-lg border border-gray-100">
+                                {/* 5. Needs Renewal & Date & Contact */}
+                                <div className="flex items-center gap-3 bg-gray-50/50 p-2 rounded-lg border border-gray-100 md:col-span-2">
                                     <label className="flex items-center gap-2 cursor-pointer select-none">
                                         <input
                                             type="checkbox"
@@ -335,13 +340,21 @@ const EditDocument: React.FC<EditDocumentProps> = ({ isOpen, onClose, documentId
                                         <span className="text-xs font-medium text-gray-700">Need Renewal</span>
                                     </label>
                                     {formData.needsRenewal && (
-                                        <div className="flex-1">
+                                        <div className="flex-1 flex gap-3">
                                             <input
                                                 type="date"
-                                                className="w-full p-1.5 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none bg-white"
+                                                className="flex-1 p-1.5 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none bg-white"
                                                 value={formData.renewalDate || ''}
                                                 onChange={e => handleChange('renewalDate', e.target.value)}
+                                                placeholder="dd-mm-yyyy"
                                                 required
+                                            />
+                                            <input
+                                                type="tel"
+                                                className="flex-1 p-1.5 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-indigo-500 outline-none bg-white"
+                                                value={formData.contactNumber || ''}
+                                                onChange={e => handleChange('contactNumber', e.target.value)}
+                                                placeholder="Contact Number..."
                                             />
                                         </div>
                                     )}

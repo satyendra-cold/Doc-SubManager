@@ -17,6 +17,7 @@ interface DocumentEntry {
   companyName: string; // The "Name" field
   needsRenewal: boolean;
   renewalDate?: string;
+  contactNumber?: string;
   file: File | null;
   fileName: string;
   fileContent?: string;
@@ -45,6 +46,7 @@ const AddDocument: React.FC<AddDocumentProps> = ({ isOpen, onClose }) => {
       companyName: "",
       needsRenewal: false,
       renewalDate: "",
+      contactNumber: "",
       file: null,
       fileName: "",
     },
@@ -139,6 +141,7 @@ const AddDocument: React.FC<AddDocumentProps> = ({ isOpen, onClose }) => {
         companyName: "",
         needsRenewal: false,
         renewalDate: "",
+        contactNumber: "",
         file: null,
         fileName: "",
       },
@@ -300,6 +303,11 @@ const AddDocument: React.FC<AddDocumentProps> = ({ isOpen, onClose }) => {
           sheetData["Need Renewal"],
           sheetData["Renewal Date"],
           sheetData.Image,
+          '',                                           // 9: Empty
+          '',                                           // 10: Empty
+          '',                                           // 11: Empty
+          '',                                           // 12: Empty
+          entry.contactNumber || '',                    // 13: Column N - Contact Number
         ],
       });
 
@@ -332,6 +340,7 @@ const AddDocument: React.FC<AddDocumentProps> = ({ isOpen, onClose }) => {
           companyName: "",
           needsRenewal: false,
           renewalDate: "",
+          contactNumber: "",
           file: null,
           fileName: "",
         },
@@ -458,8 +467,8 @@ const AddDocument: React.FC<AddDocumentProps> = ({ isOpen, onClose }) => {
                     />
                   </div>
 
-                  {/* 5. Needs Renewal & Date */}
-                  <div className="flex gap-3 items-center p-2 rounded-lg border border-gray-100 bg-gray-50/50">
+                  {/* 5. Needs Renewal & Date & Contact */}
+                  <div className="flex gap-3 items-center p-2 rounded-lg border border-gray-100 bg-gray-50/50 md:col-span-2">
                     <label className="flex gap-2 items-center cursor-pointer select-none">
                       <input
                         type="checkbox"
@@ -479,10 +488,10 @@ const AddDocument: React.FC<AddDocumentProps> = ({ isOpen, onClose }) => {
                     </label>
 
                     {entry.needsRenewal && (
-                      <div className="flex-1">
+                      <div className="flex-1 flex gap-3">
                         <input
                           type="date"
-                          className="w-full p-1.5 text-xs shadow-input border-none rounded focus:ring-1 focus:ring-indigo-500 outline-none bg-white"
+                          className="flex-1 p-1.5 text-xs shadow-input border-none rounded focus:ring-1 focus:ring-indigo-500 outline-none bg-white"
                           value={entry.renewalDate || ""}
                           onChange={(e) =>
                             handleChange(
@@ -491,7 +500,21 @@ const AddDocument: React.FC<AddDocumentProps> = ({ isOpen, onClose }) => {
                               e.target.value
                             )
                           }
+                          placeholder="dd-mm-yyyy"
                           required
+                        />
+                        <input
+                          type="tel"
+                          className="flex-1 p-1.5 text-xs shadow-input border-none rounded focus:ring-1 focus:ring-indigo-500 outline-none bg-white"
+                          value={entry.contactNumber || ""}
+                          onChange={(e) =>
+                            handleChange(
+                              entry.id,
+                              "contactNumber",
+                              e.target.value
+                            )
+                          }
+                          placeholder="Contact Number..."
                         />
                       </div>
                     )}
