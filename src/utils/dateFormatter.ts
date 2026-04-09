@@ -2,85 +2,31 @@
 export const formatDate = (dateStr: string | undefined | null): string => {
     if (!dateStr) return '-';
 
-    // If it's already empty or just whitespace
     const trimmedStr = dateStr.toString().trim();
-    if (!trimmedStr) return '-';
+    if (!trimmedStr || trimmedStr === 'No' || trimmedStr === '-') return '-';
 
     try {
-        // Check if it's already in a readable format (like "15 Jan 2024")
-        // If it contains month names, return as is
-        const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-        const lowerStr = trimmedStr.toLowerCase();
-        if (monthNames.some(month => lowerStr.includes(month))) {
-            return trimmedStr;
-        }
-
-        // Try to parse the date string
-        let date: Date;
-
-        // Handle multiple date formats
-
-        // Format 1: YYYY-MM-DD (from input type="date")
+        // Handle YYYY-MM-DD specifically to avoid timezone issues
         const ymdMatch = trimmedStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
         if (ymdMatch) {
             const [_, year, month, day] = ymdMatch;
-            // Create date in local timezone (midnight)
-            date = new Date(
-                parseInt(year, 10),
-                parseInt(month, 10) - 1, // Months are 0-indexed
-                parseInt(day, 10),
-                12, // Set to noon to avoid timezone issues
-                0, 0, 0
-            );
-        }
-        // Format 2: DD/MM/YYYY
-        else if (trimmedStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/)) {
-            const parts = trimmedStr.split('/');
-            const day = parseInt(parts[0], 10);
-            const month = parseInt(parts[1], 10) - 1;
-            const year = parseInt(parts[2], 10);
-            date = new Date(year, month, day, 12, 0, 0, 0);
-        }
-        // Format 3: MM/DD/YYYY (US format)
-        else if (trimmedStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/)) {
-            // Check if it could be US format by trying both
-            const parts = trimmedStr.split('/');
-            if (parts.length === 3) {
-                const month = parseInt(parts[0], 10) - 1;
-                const day = parseInt(parts[1], 10);
-                const year = parseInt(parts[2], 10);
-                date = new Date(year, month, day, 12, 0, 0, 0);
-            } else {
-                date = new Date(trimmedStr);
-            }
-        }
-        // Format 4: ISO string (from JavaScript Date)
-        else if (trimmedStr.includes('T')) {
-            date = new Date(trimmedStr);
-        }
-        // Format 5: Try parsing as is
-        else {
-            date = new Date(trimmedStr);
+            // Create date at noon local time
+            const date = new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10), 12, 0, 0);
+            return date.toLocaleDateString("en-GB");
         }
 
-        // Check if date is valid
+        // Fallback for other formats
+        const date = new Date(trimmedStr);
         if (isNaN(date.getTime())) {
-            console.warn('Invalid date string:', trimmedStr);
             return trimmedStr;
         }
-
-        // Format as DD MMM YYYY (professional format)
-        const day = date.getDate().toString().padStart(2, '0');
-        const monthNamesFull = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const month = monthNamesFull[date.getMonth()];
-        const year = date.getFullYear();
-
-        return `${day} ${month} ${year}`;
+        return date.toLocaleDateString("en-GB");
     } catch (error) {
         console.error('Error formatting date:', trimmedStr, error);
         return trimmedStr;
     }
 };
+
 
 // Helper function to format date for Google Sheets (without timezone shift)
 export const formatDateForGoogleSheets = (dateStr: string | Date): string => {

@@ -12,6 +12,7 @@ interface AddSubscriptionProps {
 interface SubscriptionFormData {
     companyName: string;
     subscriberName: string;
+    subscriberContact: string;
     subscriptionName: string;
     price: string;
     frequency: string;
@@ -22,6 +23,7 @@ const AddSubscription: React.FC<AddSubscriptionProps> = ({ isOpen, onClose, onSu
   const [formData, setFormData] = useState<SubscriptionFormData>({
     companyName: '',
     subscriberName: '',
+    subscriberContact: '',
     subscriptionName: '',
     price: '',
     frequency: '',
@@ -130,6 +132,10 @@ const AddSubscription: React.FC<AddSubscriptionProps> = ({ isOpen, onClose, onSu
       toast.error('Purpose is required');
       return false;
     }
+    if (!formData.subscriberContact.trim()) {
+      toast.error('Subscriber Contact is required');
+      return false;
+    }
     return true;
   };
 
@@ -160,13 +166,30 @@ const AddSubscription: React.FC<AddSubscriptionProps> = ({ isOpen, onClose, onSu
       // Prepare data for Google Sheets as an ARRAY in the correct order
       const rowData = [
         timestamp,                 // A: Timestamp
-        sn,                        // B: SN No (formatted as SN-001, SN-002, etc.)
+        sn,                        // B: SN No
         formData.companyName,      // C: Company Name
         formData.subscriberName,   // D: Subscriber Name
         formData.subscriptionName, // E: Subscription Name
         formData.price,            // F: Price
-        formData.frequency,        // G: Frequency (Column 7)
-        formData.purpose           // H: Purpose
+        formData.frequency,        // G: Frequency
+        formData.purpose,          // H: Purpose
+        '',                        // I
+        '',                        // J
+        '',                        // K
+        '',                        // L
+        '',                        // M
+        '',                        // N
+        '',                        // O
+        '',                        // P
+        '',                        // Q
+        '',                        // R
+        '',                        // S
+        '',                        // T
+        '',                        // U
+        '',                        // V
+        '',                        // W
+        '',                        // X
+        formData.subscriberContact // Y: Subscriber Contact (Index 24)
       ];
 
       console.log('Submitting to Google Sheets:', {
@@ -191,6 +214,7 @@ const AddSubscription: React.FC<AddSubscriptionProps> = ({ isOpen, onClose, onSu
         setFormData({ 
           companyName: '', 
           subscriberName: '', 
+          subscriberContact: '',
           subscriptionName: '', 
           price: '', 
           frequency: '', 
@@ -287,20 +311,37 @@ const AddSubscription: React.FC<AddSubscriptionProps> = ({ isOpen, onClose, onSu
                   </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Subscription Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="subscriptionName"
-                  required
-                  disabled={submitting}
-                  className="w-full p-3 shadow-input border-none rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  value={formData.subscriptionName}
-                  onChange={handleInputChange}
-                  placeholder="e.g. Netflix Premium"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Subscription Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="subscriptionName"
+                    required
+                    disabled={submitting}
+                    className="w-full p-3 shadow-input border-none rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    value={formData.subscriptionName}
+                    onChange={handleInputChange}
+                    placeholder="e.g. Netflix Premium"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Subscriber Contact <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="subscriberContact"
+                    required
+                    disabled={submitting}
+                    className="w-full p-3 shadow-input border-none rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    value={formData.subscriberContact}
+                    onChange={handleInputChange}
+                    placeholder="e.g. +91 9876543210"
+                  />
+                </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

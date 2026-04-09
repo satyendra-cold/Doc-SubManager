@@ -188,12 +188,12 @@ const AddDocument: React.FC<AddDocumentProps> = ({ isOpen, onClose }) => {
     // FETCH LATEST DATA: Critical for multi-user SN generation
     let currentDocs: DocumentItem[] = documents;
     try {
-        const freshDocs = await fetchDocumentsFromGoogleSheets();
-        if (freshDocs && freshDocs.length > 0) {
-            currentDocs = freshDocs;
-        }
+      const freshDocs = await fetchDocumentsFromGoogleSheets();
+      if (freshDocs && freshDocs.length > 0) {
+        currentDocs = freshDocs;
+      }
     } catch (error) {
-        console.warn("Could not fetch latest docs for SN generation, using local cache", error);
+      console.warn("Could not fetch latest docs for SN generation, using local cache", error);
     }
 
     const folderId = import.meta.env.VITE_GOOGLE_DRIVE_FOLDER_ID;
@@ -216,117 +216,116 @@ const AddDocument: React.FC<AddDocumentProps> = ({ isOpen, onClose }) => {
 
     // Generate strict sequence based on Max SN
     for (let i = 0; i < entries.length; i++) {
-        const nextVal = maxSn + 1 + i;
-        snList.push(`SN-${nextVal.toString().padStart(3, '0')}`);
+      const nextVal = maxSn + 1 + i;
+      snList.push(`SN-${nextVal.toString().padStart(3, '0')}`);
     }
 
     try {
       const newDocuments: DocumentItem[] = [];
 
-    // Process sequentially to ensure order in Google Sheets
-    for (const [index, entry] of entries.entries()) {
-      const exists = masterData?.some(
-        (m) =>
-          m.companyName.toLowerCase() === entry.companyName.toLowerCase() &&
-          m.documentType.toLowerCase() === entry.documentType.toLowerCase() &&
-          m.category.toLowerCase() === entry.category.toLowerCase()
-      );
+      // Process sequentially to ensure order in Google Sheets
+      for (const [index, entry] of entries.entries()) {
+        const exists = masterData?.some(
+          (m) =>
+            m.companyName.toLowerCase() === entry.companyName.toLowerCase() &&
+            m.documentType.toLowerCase() === entry.documentType.toLowerCase() &&
+            m.category.toLowerCase() === entry.category.toLowerCase()
+        );
 
-      if (!exists) {
-        addMasterData({
+        if (!exists) {
+          addMasterData({
+            id: Math.random().toString(36).substr(2, 9),
+            companyName: entry.companyName,
+            documentType: entry.documentType,
+            category: entry.category,
+          });
+        }
+
+        // Assign Pre-calculated SN
+        const newSN = snList[index];
+        const randomSN = newSN;
+        let fileUrl = "";
+
+        // 1. Upload File if present
+        if (entry.file && entry.fileContent && folderId) {
+          try {
+            const uploadRes = await submitToGoogleSheets({
+              action: "uploadFile",
+              sheetName: "Documents",
+              data: {
+                base64Data: entry.fileContent,
+                fileName: entry.fileName,
+                mimeType: entry.file.type,
+                folderId: folderId,
+              },
+            });
+
+            if (uploadRes && uploadRes.fileUrl) {
+              fileUrl = uploadRes.fileUrl;
+            }
+          } catch (uploadErr) {
+            console.error(`Failed to upload file ${entry.fileName}`, uploadErr);
+            toast.error(
+              `Failed to upload ${entry.fileName}, saving without file.`
+            );
+          }
+        }
+
+        // 2. Prepare Payload
+        const now = new Date();
+        const formattedTimestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
+        const sheetData = {
+          Timestamp: formattedTimestamp,
+          "Serial No": randomSN,
+          "Document name": entry.documentName,
+          "Document Type": entry.documentType,
+          Category: entry.category,
+          Name: entry.companyName,
+          "Need Renewal": entry.needsRenewal ? "Yes" : "No",
+          "Renewal Date": entry.renewalDate || "",
+
+          Image: fileUrl || "",
+        };
+
+        // 3. Submit Document
+        await submitToGoogleSheets({
+          action: "insert",
+          sheetName: "Documents",
+          data: [
+            sheetData.Timestamp,
+            sheetData["Serial No"],
+            sheetData["Document name"],
+            sheetData["Document Type"],
+            sheetData.Category,
+            sheetData.Name,
+            sheetData["Need Renewal"],
+            sheetData["Renewal Date"],
+            sheetData.Image,
+            '',                                           // 9: Empty
+            '',                                           // 10: Empty
+            '',                                           // 11: Empty
+            '',                                           // 12: Empty
+            entry.contactNumber || '',                    // 13: Column N - Contact Number
+          ],
+        });
+
+        // 4. Update Local State
+        newDocuments.push({
           id: Math.random().toString(36).substr(2, 9),
+          sn: randomSN,
+          documentName: entry.documentName,
           companyName: entry.companyName,
           documentType: entry.documentType,
           category: entry.category,
+          needsRenewal: entry.needsRenewal,
+          renewalDate: entry.needsRenewal ? entry.renewalDate : undefined,
+          file: entry.fileName || null,
+          fileContent: entry.fileContent,
+          date: new Date().toISOString().split("T")[0],
+          status: "Active",
         });
       }
-
-      // Assign Pre-calculated SN
-      const newSN = snList[index];
-      const randomSN = newSN;
-      let fileUrl = "";
-
-      // 1. Upload File if present
-      if (entry.file && entry.fileContent && folderId) {
-        try {
-          const uploadRes = await submitToGoogleSheets({
-            action: "uploadFile",
-            sheetName: "Documents",
-            data: {
-              base64Data: entry.fileContent,
-              fileName: entry.fileName,
-              mimeType: entry.file.type,
-              folderId: folderId,
-            },
-          });
-
-          if (uploadRes && uploadRes.fileUrl) {
-            fileUrl = uploadRes.fileUrl;
-          }
-        } catch (uploadErr) {
-          console.error(`Failed to upload file ${entry.fileName}`, uploadErr);
-          toast.error(
-            `Failed to upload ${entry.fileName}, saving without file.`
-          );
-        }
-      }
-
-      // 2. Prepare Payload
-      const now = new Date();
-      const formattedTimestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-
-      const sheetData = {
-        Timestamp: formattedTimestamp,
-        "Serial No": randomSN,
-        "Document name": entry.documentName,
-        "Document Type": entry.documentType,
-        Category: entry.category,
-        Name: entry.companyName,
-        "Need Renewal": entry.needsRenewal ? "Yes" : "No",
-        "Renewal Date": entry.renewalDate
-          ? new Date(entry.renewalDate).toLocaleDateString("en-GB")
-          : "",
-        Image: fileUrl || "",
-      };
-
-      // 3. Submit Document
-      await submitToGoogleSheets({
-        action: "insert",
-        sheetName: "Documents",
-        data: [
-          sheetData.Timestamp,
-          sheetData["Serial No"],
-          sheetData["Document name"],
-          sheetData["Document Type"],
-          sheetData.Category,
-          sheetData.Name,
-          sheetData["Need Renewal"],
-          sheetData["Renewal Date"],
-          sheetData.Image,
-          '',                                           // 9: Empty
-          '',                                           // 10: Empty
-          '',                                           // 11: Empty
-          '',                                           // 12: Empty
-          entry.contactNumber || '',                    // 13: Column N - Contact Number
-        ],
-      });
-
-      // 4. Update Local State
-      newDocuments.push({
-        id: Math.random().toString(36).substr(2, 9),
-        sn: randomSN,
-        documentName: entry.documentName,
-        companyName: entry.companyName,
-        documentType: entry.documentType,
-        category: entry.category,
-        needsRenewal: entry.needsRenewal,
-        renewalDate: entry.needsRenewal ? entry.renewalDate : undefined,
-        file: entry.fileName || null,
-        fileContent: entry.fileContent,
-        date: new Date().toISOString().split("T")[0],
-        status: "Active",
-      });
-    }
       addDocuments(newDocuments);
       toast.success(`${newDocuments.length} Document(s) added successfully`);
       onClose();

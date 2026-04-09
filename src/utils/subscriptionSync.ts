@@ -196,10 +196,11 @@ export const syncSubscriptions = async (): Promise<SubscriptionItem[]> => {
                 actual2,
                 actual3,
                 renewalStatus: renewalStatusSheet,
+                actual1,
                 planned1,
                 planned2,
-                actual1,
                 renewalCount,
+                subscriberContact: (row[24] || '').toString().trim(), // Col Y
                 rowIndex: rowIndex
             };
         })

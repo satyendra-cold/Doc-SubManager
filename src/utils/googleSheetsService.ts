@@ -179,16 +179,16 @@ export const fetchDocumentsFromGoogleSheets = async (): Promise<DocumentItem[]> 
     let headerIndex = -1;
     if (rows && rows.length > 0) {
       // Look for "Serial No" in the second column (index 1) or "Timestamp" in first (index 0)
-      headerIndex = rows.findIndex((r: any) => 
-        (r?.[1] && String(r[1]).trim() === "Serial No") || 
+      headerIndex = rows.findIndex((r: any) =>
+        (r?.[1] && String(r[1]).trim() === "Serial No") ||
         (r?.[1] && String(r[1]).trim() === "Serial no")
       );
     }
-    
+
     // If header found, data starts after it. If not, fallback to slice(1) (standard) or slice(6) (if we blindly trust previous structure)
     // Using headerIndex is safest.
     // If header is at index 5 (Row 6), data starts at index 6. body should have rows starting at index 6.
-    const startObjIndex = headerIndex !== -1 ? headerIndex + 1 : 1; 
+    const startObjIndex = headerIndex !== -1 ? headerIndex + 1 : 1;
     const body = rows.length > startObjIndex ? rows.slice(startObjIndex) : [];
 
     const getDateString = (dateVal: any): string => {
@@ -211,15 +211,15 @@ export const fetchDocumentsFromGoogleSheets = async (): Promise<DocumentItem[]> 
         // Robust rowIndex logic similar to fetchLoansFromGoogleSheets
         const lastVal = r[r.length - 1];
         const serverRowIndex = (typeof lastVal === 'number' && lastVal > 1) ? lastVal : null;
-        
+
         // Calculate Row Index:
         // If headerIndex was 5 (Row 6), startObjIndex is 6 (Row 7).
         // item at index 0 is from rows[6] -> Row 7.
         // Formula: serverRowIndex OR (headerIndex found + 1 (making it 1-based Row 6) + 1 (next row) + index)
         // If headerIndex is -1 (defaults to slice 1, assuming Row 1 header), then -1 + 1 + 1 + 0 = 1... incorrect.
         // If header not found (using default slice 1): index + 2.
-        
-        const fallbackBase = headerIndex !== -1 ? (headerIndex + 2) : 2; 
+
+        const fallbackBase = headerIndex !== -1 ? (headerIndex + 2) : 2;
         const rowIndex = serverRowIndex || (index + fallbackBase);
 
         return {
@@ -271,13 +271,13 @@ export const fetchRenewalHistoryFromGoogleSheets = async (): Promise<RenewalItem
     // Dynamic Header Detection for Renewal Sheet
     let headerIndex = -1;
     if (rows && rows.length > 0) {
-      headerIndex = rows.findIndex((r: any) => 
+      headerIndex = rows.findIndex((r: any) =>
         (r?.[1] && String(r[1]).trim().toLowerCase().includes("serial no"))
       );
     }
-    
+
     // Data starts after header. If no header found, assume row 1 (index 0) is header, so start at index 1.
-    const startObjIndex = headerIndex !== -1 ? headerIndex + 1 : 1; 
+    const startObjIndex = headerIndex !== -1 ? headerIndex + 1 : 1;
     const body = rows.length > startObjIndex ? rows.slice(startObjIndex) : [];
 
     const getDateString = (dateVal: any): string => {
@@ -291,7 +291,7 @@ export const fetchRenewalHistoryFromGoogleSheets = async (): Promise<RenewalItem
       // Standard Mapping if we assume the user hasn't changed column order but just added rows/headers.
       // A: Timestamp (0), B: Serial No (1), C: Last Renewal Date (2), D: old Image (3)
       // E: Need Renewal (4), F: New Renewal Date (5), G: New Image (6)
-      
+
       const oldFileUrl = (r?.[3] || "").toString().trim();
       const newFileUrl = (r?.[6] || "").toString().trim();
 
@@ -303,7 +303,7 @@ export const fetchRenewalHistoryFromGoogleSheets = async (): Promise<RenewalItem
         documentType: '', // Will be matched in UI via SN
         category: '', // Will be matched in UI via SN
         companyName: '', // Will be matched in UI via SN
-        entryDate: getDateString(r?.[0]), 
+        entryDate: getDateString(r?.[0]),
         oldRenewalDate: getDateString(r?.[2]),
         oldFile: oldFileUrl ? "View File" : null,
         oldFileContent: oldFileUrl,
@@ -662,15 +662,15 @@ export const fetchSubscriptionRenewalHistoryFromGoogleSheets = async (): Promise
 
     const json = (await res.json()) as any;
     const rows = json.data;
-    
+
     // Header logic: Look for "Renewal No"
     let headerIndex = -1;
     if (rows && rows.length > 0) {
-      headerIndex = rows.findIndex((r: any) => 
+      headerIndex = rows.findIndex((r: any) =>
         (r?.[1] && String(r[1]).trim().toLowerCase().includes("renewal no"))
       );
     }
-    
+
     const startObjIndex = headerIndex !== -1 ? headerIndex + 1 : 1;
     const body = rows.length > startObjIndex ? rows.slice(startObjIndex) : [];
 

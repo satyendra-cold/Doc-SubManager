@@ -187,7 +187,8 @@ const AllDocuments = () => {
           doc.category,
           doc.companyName,
           doc.needsRenewal ? "Yes" : "No",
-          doc.renewalDate ? new Date(doc.renewalDate).toLocaleDateString("en-GB") : "",
+          doc.renewalDate || "",
+
           doc.fileContent || "",
           "Deleted"
         ];

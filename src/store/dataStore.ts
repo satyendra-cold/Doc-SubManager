@@ -57,6 +57,8 @@ export interface SubscriptionItem {
   file?: string | null; // Generic file
   fileContent?: string;
   renewalCount?: string;
+  subscriberContact?: string;
+  rowIndex?: number;
 }
 
 export interface LoanItem {

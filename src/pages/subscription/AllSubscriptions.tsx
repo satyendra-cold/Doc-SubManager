@@ -7,7 +7,6 @@ import useDataStore from '../../store/dataStore';
 import { syncSubscriptions } from '../../utils/subscriptionSync';
 import { submitToGoogleSheets } from '../../utils/googleSheetsService';
 import { toast } from 'react-hot-toast';
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
 const AllSubscriptions = () => {
   const { setTitle } = useHeaderStore();
@@ -140,6 +139,7 @@ const AllSubscriptions = () => {
       const matchesSearch = (item.subscriptionName || '').toLowerCase().includes(deferredSearch.toLowerCase()) ||
         (item.companyName || '').toLowerCase().includes(deferredSearch.toLowerCase()) ||
         (item.subscriberName || '').toLowerCase().includes(deferredSearch.toLowerCase()) ||
+        (item.subscriberContact || '').toLowerCase().includes(deferredSearch.toLowerCase()) ||
         (item.sn || '').toLowerCase().includes(deferredSearch.toLowerCase());
 
       const matchesfreq = filterFrequency ? item.frequency === filterFrequency : true;
@@ -272,6 +272,7 @@ const AllSubscriptions = () => {
                   <th className="px-3 py-2">Subscription Name</th>
                   <th className="px-3 py-2">Price</th>
                   <th className="px-3 py-2">Frequency</th>
+                  <th className="px-3 py-2">Subscriber Contact</th>
                   <th className="px-3 py-2">Purpose</th>
                 </tr>
               </thead>
@@ -314,6 +315,7 @@ const AllSubscriptions = () => {
                         {item.frequency}
                       </span>
                     </td>
+                    <td className="px-3 py-2 text-gray-700 font-medium">{item.subscriberContact}</td>
                     <td className="px-3 py-2 text-gray-500 max-w-xs truncate" title={item.purpose}>{item.purpose}</td>
                     </tr>
                 ))}
@@ -351,6 +353,10 @@ const AllSubscriptions = () => {
                     <h3 className="text-sm font-bold text-gray-900 leading-tight">{item.subscriptionName}</h3>
                     <p className="text-xs text-gray-500 mt-0.5 font-medium">{item.companyName}</p>
                   </div>
+                </div>
+                <div className="flex flex-col items-end gap-1.5 pt-1">
+                   <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Contact</div>
+                   <div className="text-xs font-bold text-gray-700">{item.subscriberContact || 'N/A'}</div>
                 </div>
               </div>
             </div>

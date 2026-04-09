@@ -151,7 +151,7 @@ const EditDocument: React.FC<EditDocumentProps> = ({ isOpen, onClose, documentId
                 try {
                     // Extract base64 content
                     const base64Content = formData.fileContent.split(',')[1] || formData.fileContent;
-                    
+
                     // Guess mime type from header if present
                     let mimeType = 'application/octet-stream';
                     const matches = formData.fileContent.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,/);
@@ -182,36 +182,36 @@ const EditDocument: React.FC<EditDocumentProps> = ({ isOpen, onClose, documentId
                     toast.error("Failed to upload new file, continuing with update...");
                 }
             } else if (formData.fileContent && (formData.fileContent.includes("drive.google.com") || formData.fileContent.includes("docs.google.com"))) {
-                 // Existing Google Drive URL - keep it
-                 fileUrl = formData.fileContent;
+                // Existing Google Drive URL - keep it
+                fileUrl = formData.fileContent;
             } else if (formData.fileContent && formData.fileContent.startsWith("http")) {
-                 // Other HTTP link - keep it
-                 fileUrl = formData.fileContent;
+                // Other HTTP link - keep it
+                fileUrl = formData.fileContent;
             }
 
             // Prepare row data matching the SHEET columns:
             // Preservation Logic: Use existing date/timestamp if available.
             // Strict cleanup: If it contains 'T' and 'Z' (ISO), convert it back to YYYY-MM-DD HH:mm:ss
             // If it's already clean, keep it.
-            let timestampToUse = new Date().toLocaleString(); 
-            
+            let timestampToUse = new Date().toLocaleString();
+
             if (formData.date && typeof formData.date === 'string') {
-                 if (formData.date.includes('T') || formData.date.includes('Z')) {
-                      // It's ISO, clean it
-                      const d = new Date(formData.date);
-                      if (!isNaN(d.getTime())) {
+                if (formData.date.includes('T') || formData.date.includes('Z')) {
+                    // It's ISO, clean it
+                    const d = new Date(formData.date);
+                    if (!isNaN(d.getTime())) {
                         timestampToUse = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
-                      }
-                 } else {
-                     // Assume it's already clean or valid enough
-                     timestampToUse = formData.date;
-                 }
+                    }
+                } else {
+                    // Assume it's already clean or valid enough
+                    timestampToUse = formData.date;
+                }
             } else {
-                 // Fallback if empty
-                 const now = new Date();
-                 timestampToUse = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+                // Fallback if empty
+                const now = new Date();
+                timestampToUse = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
             }
-            
+
             // Note: Google Sheets sometimes auto-detects date. Putting a ' before it forces string but might break other things.
             // Ideally, sending strict "YYYY-MM-DD HH:mm:ss" without T/Z is treated as string or custom date by Sheets.
 
@@ -223,7 +223,7 @@ const EditDocument: React.FC<EditDocumentProps> = ({ isOpen, onClose, documentId
                 formData.category,                            // 4: Category
                 formData.companyName,                         // 5: Name
                 formData.needsRenewal ? "Yes" : "No",         // 6: Renewal
-                formData.renewalDate ? new Date(formData.renewalDate).toLocaleDateString("en-GB") : "", // 7: Renewal Date
+                formData.renewalDate || "",                   // 7: Renewal Date
                 fileUrl,                                      // 8: Image URL
                 '',                                           // 9: Empty
                 '',                                           // 10: Empty
