@@ -73,7 +73,52 @@ const EditDocument: React.FC<EditDocumentProps> = ({ isOpen, onClose, documentId
         if (isOpen && documentId) {
             const doc = documents.find(d => d.id === documentId);
             if (doc) {
-                setFormData({ ...doc });
+                let formattedRenewalDate = doc.renewalDate;
+                if (formattedRenewalDate) {
+                    // Check if it's an ISO string that might need timezone conversion
+                    if (formattedRenewalDate.includes('T') || formattedRenewalDate.includes('Z')) {
+                        const d = new Date(formattedRenewalDate);
+                        if (!isNaN(d.getTime())) {
+                            const year = d.getFullYear();
+                            const month = String(d.getMonth() + 1).padStart(2, '0');
+                            const day = String(d.getDate()).padStart(2, '0');
+                            formattedRenewalDate = `${year}-${month}-${day}`;
+                        } else {
+                            formattedRenewalDate = formattedRenewalDate.split(/[T ]/)[0]; // fallback
+                        }
+                    } else {
+                        // Regular string format without timezone specifiers
+                        let cleanStr = formattedRenewalDate;
+
+                        const parts = cleanStr.split(/[-/]/);
+                        if (parts.length === 3) {
+                            if (parts[0].length <= 2) {
+                                // Format is likely DD/MM/YYYY or DD-MM-YYYY
+                                const day = parts[0].padStart(2, '0');
+                                const month = parts[1].padStart(2, '0');
+                                let year = parts[2];
+                                if (year.length === 2) year = '20' + year;
+                                formattedRenewalDate = `${year}-${month}-${day}`;
+                            } else if (parts[0].length === 4) {
+                                // Format is likely YYYY-MM-DD, just pad month and day
+                                const year = parts[0];
+                                const month = parts[1].padStart(2, '0');
+                                const day = parts[2].padStart(2, '0');
+                                formattedRenewalDate = `${year}-${month}-${day}`;
+                            } else {
+                                formattedRenewalDate = cleanStr; // Fallback
+                            }
+                        } else {
+                            // Fallback
+                            formattedRenewalDate = cleanStr;
+                        }
+                    }
+                }
+
+                setFormData({ 
+                    ...doc,
+                    renewalDate: formattedRenewalDate
+                });
                 // If it's a URL, display a generic name or "Current File"
                 // If we have a local file name stored in 'file' property (from fetch mapping logic), utilize it.
                 setFileName(doc.file || (doc.fileContent && doc.fileContent.startsWith('http') ? 'Current File' : ''));
@@ -192,28 +237,30 @@ const EditDocument: React.FC<EditDocumentProps> = ({ isOpen, onClose, documentId
             // Prepare row data matching the SHEET columns:
             // Preservation Logic: Use existing date/timestamp if available.
             // Strict cleanup: If it contains 'T' and 'Z' (ISO), convert it back to YYYY-MM-DD HH:mm:ss
-            // If it's already clean, keep it.
             let timestampToUse = new Date().toLocaleString();
 
             if (formData.date && typeof formData.date === 'string') {
                 if (formData.date.includes('T') || formData.date.includes('Z')) {
-                    // It's ISO, clean it
                     const d = new Date(formData.date);
                     if (!isNaN(d.getTime())) {
                         timestampToUse = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
                     }
                 } else {
-                    // Assume it's already clean or valid enough
                     timestampToUse = formData.date;
                 }
             } else {
-                // Fallback if empty
                 const now = new Date();
                 timestampToUse = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
             }
 
-            // Note: Google Sheets sometimes auto-detects date. Putting a ' before it forces string but might break other things.
-            // Ideally, sending strict "YYYY-MM-DD HH:mm:ss" without T/Z is treated as string or custom date by Sheets.
+            // Convert to DD/MM/YYYY before saving
+            let finalRenewalDateForSheet = formData.renewalDate || "";
+            if (finalRenewalDateForSheet && /^\d{4}-\d{2}-\d{2}$/.test(finalRenewalDateForSheet)) {
+                const parts = finalRenewalDateForSheet.split("-");
+                if (parts.length === 3) {
+                    finalRenewalDateForSheet = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                }
+            }
 
             const sheetRow = [
                 timestampToUse,                               // 0: Timestamp (Preserves existing)
@@ -223,7 +270,7 @@ const EditDocument: React.FC<EditDocumentProps> = ({ isOpen, onClose, documentId
                 formData.category,                            // 4: Category
                 formData.companyName,                         // 5: Name
                 formData.needsRenewal ? "Yes" : "No",         // 6: Renewal
-                formData.renewalDate || "",                   // 7: Renewal Date
+                finalRenewalDateForSheet,                     // 7: Renewal Date (DD/MM/YYYY)
                 fileUrl,                                      // 8: Image URL
                 '',                                           // 9: Empty
                 '',                                           // 10: Empty
