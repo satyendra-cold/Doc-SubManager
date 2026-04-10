@@ -272,7 +272,7 @@ const AllSubscriptions = () => {
                   <th className="px-3 py-2">Subscription Name</th>
                   <th className="px-3 py-2">Price</th>
                   <th className="px-3 py-2">Frequency</th>
-                  <th className="px-3 py-2">Subscriber Contact</th>
+                  <th className="px-3 py-2">Contact Number</th>
                   <th className="px-3 py-2">Purpose</th>
                 </tr>
               </thead>

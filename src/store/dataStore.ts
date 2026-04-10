@@ -258,6 +258,14 @@ const useDataStore = create<DataState>()(
     }),
     {
       name: "app-data-storage-v8",
+      partialize: (state) => ({
+        documents: state.documents,
+        loans: state.loans,
+        masterData: state.masterData,
+        renewalHistory: state.renewalHistory,
+        subscriptionRenewalHistory: state.subscriptionRenewalHistory,
+        shareHistory: state.shareHistory,
+      }),
     }
   )
 );

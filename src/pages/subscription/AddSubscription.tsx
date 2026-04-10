@@ -4,19 +4,19 @@ import { X, Save, Loader } from 'lucide-react';
 import { submitToGoogleSheets } from '../../utils/googleSheetsService';
 
 interface AddSubscriptionProps {
-    isOpen: boolean;
-    onClose: () => void;
-    onSuccess?: () => void; // Callback to refresh data after successful submission
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess?: () => void; // Callback to refresh data after successful submission
 }
 
 interface SubscriptionFormData {
-    companyName: string;
-    subscriberName: string;
-    subscriberContact: string;
-    subscriptionName: string;
-    price: string;
-    frequency: string;
-    purpose: string;
+  companyName: string;
+  subscriberName: string;
+  subscriberContact: string;
+  subscriptionName: string;
+  price: string;
+  frequency: string;
+  purpose: string;
 }
 
 const AddSubscription: React.FC<AddSubscriptionProps> = ({ isOpen, onClose, onSuccess }) => {
@@ -42,7 +42,7 @@ const AddSubscription: React.FC<AddSubscriptionProps> = ({ isOpen, onClose, onSu
   const fetchNextAvailableSN = async () => {
     try {
       const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_URL || "";
-      
+
       if (!GOOGLE_SCRIPT_URL) {
         throw new Error("Google Script URL is not defined");
       }
@@ -71,21 +71,21 @@ const AddSubscription: React.FC<AddSubscriptionProps> = ({ isOpen, onClose, onSu
       // Robust SN detection: Iterate all rows, look for SN-XXX pattern in Column B (index 1)
       const existingSNs = json.data
         .map((row: any[]) => {
-            if (!row || row.length < 2) return null;
-            const val = (row[1] || '').toString().trim();
-            // Match SN-123 or SN123
-            const match = val.match(/SN-?(\d+)/i);
-            return match ? parseInt(match[1]) : 0;
+          if (!row || row.length < 2) return null;
+          const val = (row[1] || '').toString().trim();
+          // Match SN-123 or SN123
+          const match = val.match(/SN-?(\d+)/i);
+          return match ? parseInt(match[1]) : 0;
         })
         .filter((num: number) => num > 0);
 
       // Find the highest SN number
       const maxSN = existingSNs.length > 0 ? Math.max(...existingSNs) : 0;
-      
+
       // Generate next SN
       const nextSNNumber = maxSN + 1;
       const formattedSN = `SN-${String(nextSNNumber).padStart(3, '0')}`;
-      
+
       setNextSN(formattedSN);
     } catch (error) {
       console.error('Error fetching next SN:', error);
@@ -103,7 +103,7 @@ const AddSubscription: React.FC<AddSubscriptionProps> = ({ isOpen, onClose, onSu
     const day = String(now.getDate()).padStart(2, '0');
     const hours = String(now.getHours()).padStart(2, '0'); // 24-hour format
     const minutes = String(now.getMinutes()).padStart(2, '0');
-    
+
     return `${year}-${month}-${day} ${hours}:${minutes}`;
   };
 
@@ -141,7 +141,7 @@ const AddSubscription: React.FC<AddSubscriptionProps> = ({ isOpen, onClose, onSu
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -150,11 +150,11 @@ const AddSubscription: React.FC<AddSubscriptionProps> = ({ isOpen, onClose, onSu
     const toastId = toast.loading(
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
-           <span className="font-bold">Submitting to Google Sheets...</span>
+          <span className="font-bold">Submitting to Google Sheets...</span>
         </div>
         <div className="text-xs opacity-90">
-           Sheet: Subscription<br/>
-           Serial Number: {nextSN}
+          Sheet: Subscription<br />
+          Serial Number: {nextSN}
         </div>
       </div>
     );
@@ -209,31 +209,31 @@ const AddSubscription: React.FC<AddSubscriptionProps> = ({ isOpen, onClose, onSu
 
       if (result.success) {
         toast.success(`Subscription ${sn} added successfully!`, { id: toastId });
-        
+
         // Reset form
-        setFormData({ 
-          companyName: '', 
-          subscriberName: '', 
+        setFormData({
+          companyName: '',
+          subscriberName: '',
           subscriberContact: '',
-          subscriptionName: '', 
-          price: '', 
-          frequency: '', 
-          purpose: '' 
+          subscriptionName: '',
+          price: '',
+          frequency: '',
+          purpose: ''
         });
-        
+
         // Fetch next SN for next entry
         fetchNextAvailableSN();
-        
+
         // Call onSuccess callback to refresh data
         if (onSuccess) {
           onSuccess();
         }
-        
+
         // Close modal after a short delay
         setTimeout(() => {
           onClose();
         }, 1000);
-        
+
       } else {
         throw new Error(result.error || 'Failed to save to Google Sheets');
       }
@@ -264,142 +264,142 @@ const AddSubscription: React.FC<AddSubscriptionProps> = ({ isOpen, onClose, onSu
       <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-input my-8">
         {/* Modal Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
-            <h2 className="text-xl font-bold text-gray-800">Add Subscription</h2>
-            <button 
-                onClick={handleClose}
-                disabled={submitting}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-                <X size={24} />
-            </button>
+          <h2 className="text-xl font-bold text-gray-800">Add Subscription</h2>
+          <button
+            onClick={handleClose}
+            disabled={submitting}
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <X size={24} />
+          </button>
         </div>
 
         {/* Modal Body */}
         <div className="p-6 md:p-8">
-            <form id="add-sub-form" onSubmit={handleSubmit} className="space-y-6">
+          <form id="add-sub-form" onSubmit={handleSubmit} className="space-y-6">
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Company Name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="companyName"
-                      required
-                      disabled={submitting}
-                      className="w-full p-3 shadow-input border-none rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                      value={formData.companyName}
-                      onChange={handleInputChange}
-                      placeholder="e.g. Netflix Inc"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Subscriber Name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="subscriberName"
-                      required
-                      disabled={submitting}
-                      className="w-full p-3 shadow-input border-none rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                      value={formData.subscriberName}
-                      onChange={handleInputChange}
-                      placeholder="e.g. John Doe"
-                    />
-                  </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Subscription Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="subscriptionName"
-                    required
-                    disabled={submitting}
-                    className="w-full p-3 shadow-input border-none rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    value={formData.subscriptionName}
-                    onChange={handleInputChange}
-                    placeholder="e.g. Netflix Premium"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Subscriber Contact <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="subscriberContact"
-                    required
-                    disabled={submitting}
-                    className="w-full p-3 shadow-input border-none rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    value={formData.subscriberContact}
-                    onChange={handleInputChange}
-                    placeholder="e.g. +91 9876543210"
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Price <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="price"
-                    required
-                    disabled={submitting}
-                    className="w-full p-3 shadow-input border-none rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    value={formData.price}
-                    onChange={handleInputChange}
-                    placeholder="e.g. ₹1499"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Frequency <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="frequency"
-                    required
-                    disabled={submitting}
-                    className="w-full p-3 shadow-input border-none rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all bg-white disabled:opacity-50 disabled:cursor-not-allowed"
-                    value={formData.frequency}
-                    onChange={handleInputChange}
-                  >
-                      <option value="" disabled>Select Frequency</option>
-                      <option value="Yearly">Yearly</option>
-                      <option value="Half-Yearly">Half-Yearly</option>
-                      <option value="Quarterly">Quarterly</option>
-                      <option value="Monthly">Monthly</option>
-                      
-                  </select>
-                </div>
-              </div>
-
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Purpose <span className="text-red-500">*</span>
+                  Company Name <span className="text-red-500">*</span>
                 </label>
-                <textarea
-                  name="purpose"
+                <input
+                  type="text"
+                  name="companyName"
                   required
-                  rows={3}
                   disabled={submitting}
-                  className="w-full p-3 shadow-input border-none rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
-                  value={formData.purpose}
+                  className="w-full p-3 shadow-input border-none rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  value={formData.companyName}
                   onChange={handleInputChange}
-                  placeholder="Why is this subscription needed? What is its purpose?"
+                  placeholder="e.g. Netflix Inc"
                 />
               </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Subscriber Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="subscriberName"
+                  required
+                  disabled={submitting}
+                  className="w-full p-3 shadow-input border-none rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  value={formData.subscriberName}
+                  onChange={handleInputChange}
+                  placeholder="e.g. John Doe"
+                />
+              </div>
+            </div>
 
-              {/* Data Preview Removed - Now using Toast */}
-            </form>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Subscription Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="subscriptionName"
+                  required
+                  disabled={submitting}
+                  className="w-full p-3 shadow-input border-none rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  value={formData.subscriptionName}
+                  onChange={handleInputChange}
+                  placeholder="e.g. Netflix Premium"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                 Contact Number <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="subscriberContact"
+                  required
+                  disabled={submitting}
+                  className="w-full p-3 shadow-input border-none rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  value={formData.subscriberContact}
+                  onChange={handleInputChange}
+                  placeholder="e.g. +91 9876543210"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Price <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="price"
+                  required
+                  disabled={submitting}
+                  className="w-full p-3 shadow-input border-none rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  value={formData.price}
+                  onChange={handleInputChange}
+                  placeholder="e.g. ₹1499"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Frequency <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="frequency"
+                  required
+                  disabled={submitting}
+                  className="w-full p-3 shadow-input border-none rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  value={formData.frequency}
+                  onChange={handleInputChange}
+                >
+                  <option value="" disabled>Select Frequency</option>
+                  <option value="Yearly">Yearly</option>
+                  <option value="Half-Yearly">Half-Yearly</option>
+                  <option value="Quarterly">Quarterly</option>
+                  <option value="Monthly">Monthly</option>
+
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Purpose <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                name="purpose"
+                required
+                rows={3}
+                disabled={submitting}
+                className="w-full p-3 shadow-input border-none rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                value={formData.purpose}
+                onChange={handleInputChange}
+                placeholder="Why is this subscription needed? What is its purpose?"
+              />
+            </div>
+
+            {/* Data Preview Removed - Now using Toast */}
+          </form>
         </div>
 
         {/* Modal Footer */}

@@ -13,7 +13,7 @@ const SubscriptionPayment = () => {
     const [activeTab, setActiveTab] = useState<'pending' | 'history'>('pending');
     const [searchTerm, setSearchTerm] = useState('');
     const deferredSearch = useDeferredValue(searchTerm); // Professional optimization
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         setTitle('Subscription Payment');
@@ -21,7 +21,6 @@ const SubscriptionPayment = () => {
     }, [setTitle]);
 
     const refreshData = async () => {
-        if (isLoading) return;
         try {
             setIsLoading(true);
             const data = await syncSubscriptions();
@@ -77,7 +76,7 @@ const SubscriptionPayment = () => {
     // Optimized Filters with deferredSearch
     const pendingSubscriptions = useMemo(() =>
         subscriptions.filter(s =>
-            s.status === 'Approved' &&
+            s.actual2 && !s.actual3 && // Show in Pending Payment ONLY if Actual 2 is NOT null and Actual 3 is null
             (
                 s.companyName.toLowerCase().includes(deferredSearch.toLowerCase()) ||
                 s.subscriptionName.toLowerCase().includes(deferredSearch.toLowerCase()) ||
@@ -88,7 +87,7 @@ const SubscriptionPayment = () => {
 
     const historySubscriptions = useMemo(() =>
         subscriptions.filter(s =>
-            s.status === 'Paid' &&
+            s.actual3 && // Show in History ONLY if Actual 3 is NOT null
             (
                 s.companyName.toLowerCase().includes(deferredSearch.toLowerCase()) ||
                 s.subscriptionName.toLowerCase().includes(deferredSearch.toLowerCase()) ||
@@ -328,6 +327,14 @@ const SubscriptionPayment = () => {
             </div>
 
             {/* Content */}
+            {isLoading ? (
+                <div className="flex flex-col items-center justify-center min-h-[400px] bg-white rounded-xl shadow-sm border border-gray-100">
+                    <Loader2 className="animate-spin text-indigo-600 mb-4" size={48} />
+                    <p className="text-gray-500 font-medium text-lg">Fetching payment records...</p>
+                    
+                </div>
+            ) : (
+                <>
             <div className="hidden md:flex flex-col bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden h-[calc(100vh-260px)]">
                 <div className="overflow-auto flex-1">
                     <table className="w-full text-left border-collapse">
@@ -508,6 +515,8 @@ const SubscriptionPayment = () => {
                     </div>
                 )}
             </div>
+                </>
+            )}
 
             {/* Payment Modal */}
             {selectedSub && (

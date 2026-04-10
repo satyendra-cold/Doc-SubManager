@@ -18,7 +18,7 @@ const SubscriptionApproval = () => {
     const [remarks, setRemarks] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     // Initial Sync on Mount
     useEffect(() => {
@@ -347,7 +347,16 @@ const SubscriptionApproval = () => {
                 </div>
             </div>
 
-            {/* Desktop Table View */}
+            {/* Content Area with Loading State */}
+            {isLoading ? (
+                <div className="flex flex-col items-center justify-center min-h-[400px] bg-white rounded-xl shadow-sm border border-gray-100">
+                    <RefreshCw className="animate-spin text-indigo-600 mb-4" size={48} />
+                    <p className="text-gray-500 font-medium text-lg">Fetching approval records...</p>
+                   
+                </div>
+            ) : (
+                <>
+                    {/* Desktop Table View */}
             <div className="hidden md:flex flex-col bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden h-[calc(100vh-210px)]">
                 <div className="overflow-auto flex-1">
                     <table className="w-full text-left border-collapse">
@@ -495,6 +504,8 @@ const SubscriptionApproval = () => {
                     </div>
                 )}
             </div>
+                </>
+            )}
 
             {/* Approval Modal */}
             {selectedSub && (
